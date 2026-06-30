@@ -30,6 +30,7 @@ services:
             - "@terminal42_fineuploader.chunk_uploader"
             - "@terminal42_fineuploader.filesystem"
             - "@request_stack"
+            - "@contao.routing.scope_matcher"
 
     terminal42_fineuploader.validator:
         class: Terminal42\FineUploaderBundle\Validator
@@ -75,7 +76,7 @@ services:
             - "@terminal42_fineuploader.uploader"
         tags:
             - { name: kernel.event_listener, event: terminal42_fineuploader.file_upload, method: onFileUpload }
-    
+
     terminal42_fineuploader.listener.form_data:
         class: Terminal42\FineUploaderBundle\EventListener\FormDataListener
 

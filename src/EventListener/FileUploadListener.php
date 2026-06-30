@@ -39,7 +39,7 @@ class FileUploadListener
         if (null === $filePath) {
             $event->setResponse(new JsonResponse([
                 'success' => false,
-                'error' => $GLOBALS['TL_LANG']['ERR']['general'],
+                'error' => $widget->getErrorAsString() ?: $GLOBALS['TL_LANG']['ERR']['general'],
                 'preventRetry' => true,
             ]));
 

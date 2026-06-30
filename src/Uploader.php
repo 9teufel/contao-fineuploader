@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Terminal42\FineUploaderBundle;
 
+use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Dbafs;
 use Contao\StringUtil;
 use Contao\Validator;
@@ -29,13 +30,19 @@ class Uploader
     private $requestStack;
 
     /**
+     * @var ScopeMatcher
+     */
+    private $scopeMatcher;
+
+    /**
      * Uploader constructor.
      */
-    public function __construct(ChunkUploader $chunkUploader, Filesystem $fs, RequestStack $requestStack)
+    public function __construct(ChunkUploader $chunkUploader, Filesystem $fs, RequestStack $requestStack, ScopeMatcher $scopeMatcher)
     {
         $this->chunkUploader = $chunkUploader;
         $this->fs = $fs;
         $this->requestStack = $requestStack;
+        $this->scopeMatcher = $scopeMatcher;
     }
 
     /**
@@ -56,7 +63,7 @@ class Uploader
         $this->configureUploader($uploader, $config, $isChunk);
 
         // Run the upload
-        if (null === ($result = $this->runUpload($uploader, $widget, $request->attributes->get('_scope')))) {
+        if (null === ($result = $this->runUpload($uploader, $widget, $request))) {
             return null;
         }
 
@@ -113,7 +120,7 @@ class Uploader
      *
      * @return array|null
      */
-    private function runUpload(FileUpload $uploader, BaseWidget $widget, $scope)
+    private function runUpload(FileUpload $uploader, BaseWidget $widget, Request $request)
     {
         $result = null;
 
@@ -122,6 +129,16 @@ class Uploader
 
             // Collect the errors
             if ($uploader->hasError()) {
+                $scope = '';
+
+                if ($this->scopeMatcher->isBackendRequest($request)) {
+                    $scope = 'BE';
+                }
+
+                if ($this->scopeMatcher->isFrontendRequest($request)) {
+                    $scope = 'FE';
+                }
+
                 $errors = $this->requestStack->getSession()->getFlashBag()->peek(\sprintf('contao.%s.error', $scope));
 
                 foreach ($errors as $error) {
