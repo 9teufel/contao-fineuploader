@@ -106,10 +106,42 @@ class Filesystem
     /**
      * Standardize the file name and remove the invalid characters.
      */
-    public function standardizeFileName(string $filename): string
-    {
-        return str_replace([',', '&'], '_', $filename);
+ public function standardizeFileName(string $filename): string
+{
+    // Bestehendes FineUploader-Verhalten beibehalten.
+    $filename = str_replace([',', '&'], '_', $filename);
+
+    $info = pathinfo($filename);
+
+    $name = strtr($info['filename'] ?? '', [
+        'Ä' => 'Ae',
+        'Ö' => 'Oe',
+        'Ü' => 'Ue',
+        'ä' => 'ae',
+        'ö' => 'oe',
+        'ü' => 'ue',
+        'ß' => 'ss',
+    ]);
+
+    $name = transliterator_transliterate(
+        'Any-Latin; Latin-ASCII; Lower()',
+        $name,
+    );
+
+    // Leer- und Sonderzeichen durch Bindestriche ersetzen.
+    $name = preg_replace('/[^a-z0-9]+/', '-', (string) $name);
+    $name = trim((string) $name, '-');
+
+    if ('' === $name) {
+        $name = 'file';
     }
+
+    // Dateiendung ebenfalls kleinschreiben.
+    $extension = strtolower($info['extension'] ?? '');
+    $extension = preg_replace('/[^a-z0-9]+/', '', $extension);
+
+    return $name.('' !== $extension ? '.'.$extension : '');
+}
 
     /**
      * Move the temporary file to its destination.
